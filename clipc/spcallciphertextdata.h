@@ -1,80 +1,136 @@
 #pragma once
 
+#include <Windows.h>
+
 /*
+1. Load WARBIRD::g_arModuleInfo and WARBIRD::g_FuncAddress
+	A. Decrypt global imports using warbird cipher
+	B. perform XOR checksum on decrypted data (= 64)
+	C. verify PE header of all modules
+	D. dynamically load g_FuncAddress function pointers using GetProcAddress
 
-v8 = 0;
-  v9 = (unsigned __int8 *)&unk_180010FB2;
-  v10 = 0;
-  v11 = 0;
-  v12 = lpMem + 7;
-  v13 = 103i64;
-  v14 = -1;
-  do
-  {
-    v15 = *(v9 - 1) | (*(v9 - 2) << 8);
-    v16 = v9[2] << 8;
-    v17 = *v9;
-    v9 += 8;
-    v18 = *(v9 - 7) | ((v17 | (v15 << 8)) << 8);
-    v19 = v18 ^ v11;
-    v20 = *(v9 - 3) | ((*(v9 - 4) | ((*(v9 - 5) | v16) << 8)) << 8);
-    v21 = v19 ^ v10 ^ v20 ^ 0xAC987321;
-    v22 = (__ROL4__(v21, 10) + 4991 * __ROL4__(v21 + 1419157410, 5)) ^ v19;
-    v23 = (43881 * __ROR4__(v22 + 133239679, 9) - __ROL4__(v22, 2)) ^ v21;
-    v24 = (24670 * v23 - (v23 >> 13) - 123127970) ^ v22;
-    v25 = (2033 * __ROL4__(v24 ^ 0xAB69, 6) - __ROL4__(v24, 2)) ^ v23;
-    v26 = (133239679 - (v25 ^ 0xAB69605E)) ^ v24;
-    v27 = (43881 * (v26 ^ 0x137F)) ^ __ROR4__(v26, 6) ^ v25;
-    v28 = (__ROL4__(v27, 2) + 24670 * __ROR4__(v27 + 133239679, 15)) ^ v26;
-    v29 = (2033 * __ROR4__(v28 + 1419157410, 14) - __ROL4__(v28, 8)) ^ v27;
-    v30 = __ROR4__(v29, 10) ^ (4991 * __ROR4__(v29 ^ 0xAB69605E, 12)) ^ v28;
-    v31 = v29 ^ (v30 >> 10) ^ (43881 * (v30 ^ 0x7F1));
-    v32 = (2033 * (__ROR4__(~v31, 5) + 24670)) ^ v30;
-    v33 = v31 ^ (v32 - 2033) ^ 0xAB69605E;
-    v34 = ((v33 >> 2) + 4991 * __ROL4__(v31 ^ (v32 - 2033) ^ 0xAB6967AF, 2)) ^ v32;
-    v35 = (__ROL4__(v34, 7) + 43881 * __ROR4__(v34 - 133239679, 6)) ^ v33;
-    v36 = (24670 * (v35 ^ 0x137F) + __ROR4__(v35, 9)) ^ v34;
-    v37 = (__ROL4__(v36, 7) + 2033 * __ROL4__(v36 ^ 0xAB69, 5)) ^ v35;
-    v38 = v37 ^ v36 ^ 0xAC987321;
-    v39 = (4991 * __ROR4__(v38, 3) - 219010071) ^ v37;
-    v40 = (24670 * __ROR4__(v39 - 133239679, 1) - __ROR4__(v39, 6)) ^ v38;
-    v41 = (__ROL4__(v40, 14) + 2033 * __ROL4__(v40 - 1419157410, 3)) ^ v39;
-    v42 = (4991 * __ROL4__(v41 - 1419157410, 15) - __ROR4__(v41, 14)) ^ v40;
-    v43 = (v42 >> 3) ^ (43881 * (v42 ^ 0x605E)) ^ v41;
-    v44 = 24670 * __ROL4__(v43 ^ 0x7F1137F, 4);
-    v45 = v43;
-    v46 = v14 ^ v43;
-    v14 = v20;
-    v47 = v8 ^ __ROL4__(v45, 2) ^ v44;
-    v8 = v18;
-    v48 = v47 ^ v42;
-    *(v12 - 4) = v48;
-    *v12 = v46;
-    v12 += 8;
-    v49 = __ROR4__(v48, 8);
-    *(v12 - 13) = v49;
-    v50 = __ROR4__(v46, 8);
-    *(v12 - 9) = v50;
-    v51 = __ROR4__(v49, 8);
-    *(v12 - 14) = v51;
-    v52 = __ROR4__(v50, 8);
-    *(v12 - 10) = v52;
-    v53 = __ROR4__(v51, 8);
-    v54 = __ROR4__(v52, 8);
-    *(v12 - 15) = v53;
-    *(v12 - 11) = v54;
-    v10 = __ROR4__(v54, 8);
-    v11 = __ROR4__(v53, 8);
-    --v13;
-  }
-  while ( v13 );
+2. Do Checks
+	A. GetProcessWindowStation
+	B. GetUserObjectInformationW (WinSta0, Default)
+	C. GetThreadDesktop
+	D. GetProcessMitigationPolicy (ImageLoadPolicy?)
 
-  v55 = 0;
-  v56 = 0i64;
-  v57 = 0;
-  v6 = 0i64;
-  v58 = 0;
-  do
-    v57 ^= lpMem[v56++];
-  while ( v56 < 0x338 );
+3. Prepare Input
+	A. Allocate 160 byte structure and fill it with the decryption cipher and allocate another block with key
+	B. perform checks on string length of "WSLicensingService-AllowDisablingStoreApps" (inlined?)
+	C. allocate sufficient block on heap according to size of string (2*len + 200)+8+8+2 (null byte)
+	D. fill initial block data (BlockA)
+	E. alloc block with size of (sizeof(blockA)+8) + N for 8 byte alignment (312)
+	F. alloc block C with size of Block A Container + 8
+	G. XOR checksum for plaintext block A Container
+	H. Encryption BlockAContainer using nEncryptionKey
+	I. Place XorChecksum 
 */
+
+#define DECRYPTED_SIZE 312
+#define TOTAL_SIZE DECRYPTED_SIZE + 8
+
+// 48 bytes
+struct BlockD
+{
+	DWORD BlockCSize;
+	CHAR Encrypted[TOTAL_SIZE];
+};
+
+struct BlockCContainer
+{
+	CHAR EncryptedData[DECRYPTED_SIZE];
+	ULONG64 XorChecksum;
+};
+
+#define LICENSE_STRING_SIZE 0x56
+
+struct BlockA
+{
+	DWORD LicenseClassSize; // 0x04
+	DWORD LicenseClass; // 0 for QueryValue
+
+	DWORD DecryptionCipherSize; // 0xA0
+	ULONG64 WbDecryptionCipher[20];
+
+	DWORD DecryptionKeySize; // 0x8
+	ULONG64 WbDecryptionKey;
+
+	DWORD TimingSize; // 0x8
+	ULONG64 Rdtsc; // __rdtsc()
+
+	DWORD LicenseValueSize;
+	WCHAR LicenseValue[LICENSE_STRING_SIZE]; // raw length in bytes not wchar
+
+	DWORD MitigationPolicySize; // 0x4
+	BOOL MitigationPolicy; // usually 0?
+
+	DWORD LeftOverSize; // 0x4
+	DWORD LeftOver; // 0x4
+};
+
+#pragma pack(8)
+struct BlockAContainer
+{
+	DWORD Values; // number of values (not sizes) in BlockA
+	DWORD DataSize;
+
+	BlockA Data;
+};
+
+// same name decoration as __local_stdio_scanf_options
+__declspec(noinline) __inline unsigned __int64* __CRTDECL WarbirdUmGetDecryptionCipher(void)
+{
+	static unsigned __int64 DecryptionCipher[20] = {
+		0x57C6892FC4999795,
+		0x2F8D98586E894E24,
+		0x0DC566911BFDED922,
+		0x4CB32EBB44E6F139,
+		0x6E56629A235908A9,
+		0x5342221EF1D3DA7B,
+		0x0,
+		0x0,
+		0x0,
+		0x0,
+		0x0,
+		0x0,
+		0x0,
+		0x0,
+		0x0,
+		0x0,
+		0x91C19160C0F0214,
+		0x1F1F1F1F1D061503,
+		0x1F1F1F1F1F1F1F1F,
+		0x1F1F1F1F1F1F1F1F
+	};
+	return DecryptionCipher;
+}
+
+__declspec(noinline) __inline unsigned __int64* __CRTDECL WarbirdUmGetDecryptionKey(void)
+{
+	static unsigned __int64 nDecryptionKey = 0x07F1137FAB69605E;
+	return &nDecryptionKey;
+}
+
+__declspec(noinline) __inline unsigned __int64* __CRTDECL WarbirdUmGetEncryptionKey(void)
+{
+	static unsigned __int64 nEncryptionKey = 0x0C81ECB17B1B54A58;
+	return &nEncryptionKey;
+}
+
+__declspec(noinline) __inline unsigned __int64* __CRTDECL WarbirdUmGetEncryptionCipher(void)
+{
+	static unsigned __int64 EncryptionCipher[20] = {
+		0x2E63A9A31BE598C9, 0x7C7765E053E2E156, 0x0CE87B95F343D263E, 0x14830898F2E7A986, 0x0C33CBD9D91831E85,
+		0x0B205784ABE210C22, 0x0B0E2DCE, 0x0, 0x0, 0x0,
+		0x0, 0x0, 0x0, 0x0, 0x0,
+		0x0, 0x181A011B090F0E1D, 0x1F1F1F02190B051E, 0x1F1F1F1F1F1F1F1F, 0x1F1F1F1F1F1F1F1F
+	};
+	return EncryptionCipher;
+}
+
+#define WARBIRD_DECRYPTION_CIPHER  (WarbirdUmGetDecryptionCipher ())
+#define WARBIRD_DECRYPTION_KEY     (*WarbirdUmGetDecryptionKey ())
+
+#define WARBIRD_ENCRYPTION_CIPHER  (WarbirdUmGetEncryptionCipher ())
+#define WARBIRD_ENCRYPTION_KEY     (*WarbirdUmGetEncryptionKey ())

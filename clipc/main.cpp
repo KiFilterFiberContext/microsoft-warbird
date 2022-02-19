@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <Windows.h>
 
 #include "WarbirdRuntimeSLCCpp.h"
 
@@ -13,17 +14,12 @@ typedef DWORD(*pStoreAppsAreDisabled)();
 
 int main()
 {
-	HMODULE Lib = LoadLibraryW(L".dll");
+	HMODULE Lib = LoadLibraryW(L"LicenseManager.dll");
 
-	// printf("Base: 0x%08x\n", (DWORD) Lib);
-	pStoreAppsAreDisabled StoreAppsAreDisabled = (pStoreAppsAreDisabled)((uint64_t) Lib + 0x2fd8);
+	printf("Base: 0x%08x\n", (ULONGLONG) Lib);
+	pStoreAppsAreDisabled StoreAppsAreDisabled = (pStoreAppsAreDisabled)((uint64_t) Lib + 0x37998);
 
 	StoreAppsAreDisabled();
-
-	WARBIRD::g_WarbirdSecureFunctionsRefCount++;
-
-	int key = WARBIRD_DECRYPTION_KEY;
-	unsigned __int64* cipher = WARBIRD_DECRYPTION_CIPHER;
 
 	return 0;
 }
