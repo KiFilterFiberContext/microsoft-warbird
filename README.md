@@ -12,9 +12,9 @@ Warbird can support different forms of code obfuscation like:
 - constant obfuscation
 - [runtime code execution](https://www.youtube.com/watch?v=gu_i6LYuePg) on the heap (`SystemControlFlowTransition` info class for `NtQuerySystemInformation` system call)
 
-A list of system images that are publicly known to use Warbird are:
+Some system images that are publicly known to use Warbird are:
 - `ci.dll`
-- `clipsp.dll`
+- `clipsp.sys`
 - `peauth.sys`
 - `ntoskrnl.exe`
 - `ClipSVC.dll`
