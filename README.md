@@ -1,7 +1,7 @@
 # Warbird Runtime
-> Reverse engineered code originating from Microsoft's Warbird obfuscation project.
+> Reverse engineered code originating from the runtime of Microsoft Warbird.
 
-Microsoft developed the Warbird to obfuscate different system components, mostly relating to DRM and licensing.  
+Microsoft developed Warbird to obfuscate different system components, mostly relating to DRM and licensing.  
 Warbird code has even been integrated into the kernel to obfuscate components (`ci`, `peauth`, `clipsp`, etc).
 
 ## Overview
@@ -30,10 +30,30 @@ The call stack of those calls generally look like:
 
 More information can be found on that [here](https://github.com/KiFilterFiberContext/windows-software-policy).
 
-## Disclaimer
-The project cannot be used as-is and is merely used for educational purposes to further public understanding.  Warbird functionality cannot be used as the actual runtime dlls are not present but can be specified by passing the `/wbrddll` flag and exporting the routines `GetObfuscator` and `CreateObfuscator2` to the MSVC compiler.
-The project could be loosely modified to support calls to `NtQuerySystemInformation` with the `SystemPolicyInformation` class but you would have to reimplement the cipher, get the encryption/decryption keys, etc... :)
+## TODO: Classes to Implement
+- `WarbirdRuntime::CTermination` 
+- `WarbirdRuntime::CMemoryAllocator::CBlock`
+- `WarbirdRuntime::CEncryption`
+- `WarbirdRuntime::CPrivateRelocationsTable`
+- `WarbirdRuntime::CHeapExecution`
+- `WarbirdRuntime::AutoEnableDynamicCodeGen`
+- `WarbirdRuntime::CUtil`
+- `WarbirdRuntime::CRWLock`
+- `WarbirdRuntime::CMemoryProtectionChangeHelper`
+- `WarbirdRuntime::WarbirdRuntime__HEAP_EXECUTION_CALL_ARGUMENTS`
+- `WarbirdRuntime::WarbirdRuntime__HEAP_EXECUTION_CONDITIONAL_BRANCH_ARGUMENTS`
+- `WarbirdRuntime::ENCRYPTED_SEGMENT_DATA_CONST`
+- `WarbirdRuntime::ENCRYPTED_SEGMENT_DATA_READ_WRITE`
+- `WarbirdRuntime::RuntimeInit`
+- `WarbirdRuntime::NewEntryMain`
 
+## Disclaimer
+The project cannot be used as-is and is merely intended to be used for educational purposes to further public understanding.  
+Warbird cannot be integrated into personal projects since the actual runtime dlls are not present.  
+
+A custom Warbird obfuscator toolset could be partially integrated by passing the `/wbrddll:` MSVC compiler flag and exporting the `GetObfuscator` and `CreateObfuscator2` routines.
+
+The project could be loosely modified to support calls to `NtQuerySystemInformation` with the `SystemPolicyInformation` class but you would have to reimplement the cipher, get the encryption/decryption keys, etc... :)
 
 ## Related 
 - [Reversal of Windows' Client Licensing Service (ClipSp.sys)](https://github.com/KiFilterFiberContext/windows-software-policy)
