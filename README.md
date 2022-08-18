@@ -1,5 +1,5 @@
 # Warbird Runtime
-> Reverse engineered code originating from the runtime of Microsoft Warbird.
+> Reverse engineered code for Microsoft's WARBIRD obfuscator
 
 Microsoft developed Warbird to obfuscate different system components, mostly relating to DRM and licensing.  
 Warbird code has even been integrated into the kernel to obfuscate components (`ci`, `peauth`, `clipsp`, etc).
