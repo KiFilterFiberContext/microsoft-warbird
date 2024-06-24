@@ -53,6 +53,8 @@ Warbird cannot be integrated into personal projects since the actual runtime dll
 
 A custom Warbird obfuscator toolset could be partially integrated by passing the `/wbrddll:` MSVC compiler flag and exporting the `GetObfuscator` and `CreateObfuscator2` routines.
 
+**UPDATE:** As of 6/11/24, it is possible to integrate the [leaked](https://seclists.org/fulldisclosure/2024/Jun/7) `warbird.dll` to build applications.
+
 The project could be loosely modified to support calls to `NtQuerySystemInformation` with the `SystemPolicyInformation` class but you would have to reimplement the cipher, get the encryption/decryption keys, etc... :)
 
 ## Related 
